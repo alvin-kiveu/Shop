@@ -1,29 +1,34 @@
 <?php
-defined('ABSPATH') or die('You cannot access this file directly.');
+
 /**
- * UmsPay WooCommerce Payment Gateway Plugin
- *
- * @package     UmsPayWooCommerce
- * @author      Alvin Kiveu (UMESKIA SOFTWARES)
- * @copyright   2025 UMESKIA SOFTWARES
- * @license     GPL-2.0+
- *
- * @wordpress-plugin
- * Plugin Name: Ums Pay for WooCommerce
- * Plugin URI: https://umeskiasoftwares.com/
- * Description: Ums Pay for WooCommerce is a powerful payment gateway plugin that allows you to accept payments via M-Pesa STK Push directly to M-Pesa Till, Paybill, and Bank Accounts.
- * Author: Alvin Kiveu (UMESKIA SOFTWARES)
- * Author URI: https://github.com/alvin-kiveu/
- * Version: 2.2.0
- * Text Domain: umspay-woocommerce
- * Domain Path: /languages
- * License: GPLv2 or later
- * License URI: http://www.gnu.org/licenses/gpl-2.0.html
+ * Plugin Name:       Ums Pay for WooCommerce
+ * Plugin URI:        https://umspay.co.ke/
+ * Description:       🚀 Ums Pay for WooCommerce enables fast and secure payment collection via M-Pesa STK Push directly to your M-Pesa Till, Paybill, or Bank Account. Ideal for Kenyan merchants using WooCommerce.
+ * Version:           2.2.0
  * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
+ * Tested up to:      6.4
+ * Requires PHP:      7.4
  * WC requires at least: 4.0
- * WC tested up to: 8.5
+ * WC tested up to:   8.5
+ * Author:            Alvin Kiveu (UMESKIA SOFTWARES)
+ * Author URI:        https://github.com/alvin-kiveu/
+ * License:           GPL v2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       umspay-woocommerce
+ * Domain Path:       /languages
+ *
+ * @package           UmsPayWooCommerce
+ * @author            Alvin Kiveu
+ * @copyright         2025 UMESKIA SOFTWARES
+ */
+
+// Exit if accessed directly.
+defined('ABSPATH') or die('You cannot access this file directly.');
+
+/**
+ * Main UmsPay WooCommerce Gateway class
+ *
+ * Load plugin files, register hooks, and initialize the payment gateway.
  */
 
 add_action('before_woocommerce_init', function () {
@@ -156,7 +161,7 @@ function umspayplugin_init()
         }
 
         // Make API request
-        $response = wp_remote_post('https://api.umeskiasoftwares.com/api/v1/intiatestk', [
+        $response = wp_remote_post('https://api.umspay.co.ke/api/v1/intiatestk', [
           'body'    => wp_json_encode([
             'api_key'   => sanitize_text_field($_POST['apikey']),
             'email'     => sanitize_email($_POST['owneremail']),
