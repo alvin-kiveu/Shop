@@ -1,7 +1,5 @@
 <?php
 defined('ABSPATH') or die('You cannot access this file directly.');
-
-<?php
 /**
  * UmsPay WooCommerce Payment Gateway Plugin
  *
