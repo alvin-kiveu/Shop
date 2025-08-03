@@ -65,7 +65,6 @@ sudo apache2ctl configtest
 # Should output: Syntax OK
 ```
 
-
 WordPress has been installed. Thank you, and enjoy!
 
 Username	ums
