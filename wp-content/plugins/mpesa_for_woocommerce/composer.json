@@ -1,0 +1,25 @@
+{
+    "name": "osenco/wc-mpesa",
+    "description": "The Umeskia-Mpesa-Plugin is a software tool that integrates M-Pesa mobile money payments into websites and applications.",
+    "type": "library",
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Osen Concepts",
+            "email": "alvo967@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Osen\\Woocommerce\\": "src/"
+        },
+        "files": [
+            "gateway.php",
+            "deprecated.php"
+        ]
+    }
+}
