@@ -244,152 +244,31 @@ Enable comprehensive debugging:
 - 💳 STK Push payment support
 - 🔧 Basic admin configuration
 
-## 💻 Usage
+## Usage
 
-Once the UmsPay WooCommerce Plugin is installed and configured:
+Once the UmsPay WooCommerce Plugin is installed and configured, it will appear as a payment option during the checkout process on your WooCommerce store. Customers can select the UmsPay payment method and complete their transactions securely.
 
-1. **Customer Experience**
-   - Customers see "M-Pesa via UmsPay" as a payment option during checkout
-   - They enter their M-Pesa phone number
-   - Click "Pay Now" to initiate STK Push
-   - Complete payment on their mobile device
-   - Automatic order status update upon payment confirmation
-
-2. **Admin Experience**
-   - Monitor payments through WooCommerce orders
-   - View detailed logs for troubleshooting
-   - Manage refunds through order interface
-   - Access comprehensive reporting
-
-## 🤝 Contributing
+## Contributing
 
 Contributions to the UmsPay WooCommerce Plugin are welcome! Here's how you can contribute:
 
-### Getting Started
+- Fork the repository.
+- Create a new branch (`git checkout -b feature-branch`).
+- Make your changes and commit them (`git commit -am 'Add new feature'`).
+- Push to the branch (`git push origin feature-branch`).
+- Create a new Pull Request.
 
-1. **Fork the repository**
-   ```bash
-   git clone https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin.git
-   cd UmsPay-WooCommwece-Plugin
-   ```
+Please ensure that your code follows the existing coding style and includes relevant tests.
 
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+## License
 
-3. **Make your changes**
-   - Follow WordPress coding standards
-   - Add appropriate comments and documentation
-   - Include relevant tests
+This project is licensed under the GNU General Public License v2.0 or later. See the [LICENSE](LICENSE) file for details.
 
-4. **Commit your changes**
-   ```bash
-   git commit -am 'Add new feature: description'
-   ```
+## Support
 
-5. **Push to the branch**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+For support, bug reports, and feature requests, please [open an issue](https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin.git/issues) on GitHub.
 
-6. **Create a Pull Request**
-   - Provide a clear description of changes
-   - Include screenshots for UI changes
-   - Reference any related issues
-
-### Development Guidelines
-
-- **Coding Standards**: Follow WordPress PHP coding standards
-- **Security**: Always sanitize inputs and validate data
-- **Performance**: Optimize for speed and efficiency
-- **Accessibility**: Ensure forms and UI are accessible
-- **Testing**: Test on multiple PHP and WordPress versions
-
-## 📄 License
-
-This project is licensed under the **GNU General Public License v2.0 or later**.
-
-### License Summary
-
-- ✅ Commercial use allowed
-- ✅ Modification allowed
-- ✅ Distribution allowed
-- ✅ Patent use allowed
-- ❗ Source code must be disclosed
-- ❗ Same license must be used
-- ❗ Copyright and license notices must be preserved
-
-See the [LICENSE](LICENSE) file for full details.
-
-## 🎯 Support
-
-### 🐛 Bug Reports
-
-Found a bug? Please [open an issue](https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/issues) with:
-
-- **Clear description** of the problem
-- **Steps to reproduce** the issue
-- **Expected vs actual behavior**
-- **Environment details** (WordPress version, PHP version, etc.)
-- **Screenshots** if applicable
-
-### 💡 Feature Requests
-
-Have an idea? [Create a feature request](https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/issues) with:
-
-- **Clear description** of the feature
-- **Use case** and benefits
-- **Implementation suggestions** (optional)
-
-### 📧 Direct Support
-
-For urgent issues or commercial support:
-
-- **Email**: support@umeskiasoftwares.com
-- **Website**: [umeskiasoftwares.com](https://umeskiasoftwares.com/)
-- **Documentation**: [UmsPay Docs](https://umeskiasoftwares.com/docs/)
-
-### 💬 Community
-
-- **GitHub Discussions**: General questions and community support
-- **Stack Overflow**: Tag your questions with `umspay` and `woocommerce`
-
-## 🏆 Acknowledgements
-
-### Core Team
-
-- **[Alvin Kiveu](https://github.com/alvin-kiveu/)** - Lead Developer
-- **UMESKIA SOFTWARES** - Development Team
-
-### Contributors
-
-Thanks to all contributors who have helped improve this plugin!
-
-### Third-Party Libraries
-
-- **WordPress** - Content management system
-- **WooCommerce** - E-commerce platform
-- **jQuery** - JavaScript library for enhanced user interactions
-
-### Special Thanks
-
-- UmsPay API team for comprehensive documentation
-- WordPress and WooCommerce communities for best practices
-- Beta testers and early adopters for valuable feedback
-
----
-
-<p align="center">
-  <strong>Made with ❤️ by <a href="https://umeskiasoftwares.com/">UMESKIA SOFTWARES</a></strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/stargazers">⭐ Star this project</a> |
-  <a href="https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/fork">🍴 Fork</a> |
-  <a href="https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/issues">🐛 Report Bug</a> |
-  <a href="https://github.com/UMESKIA-SOFTWARES/UmsPay-WooCommwece-Plugin/issues">💡 Request Feature</a>
-</p>
+## Acknowledgements
 
 Special thanks to [Alvin Kiveu](https://github.com/alvin-kiveu/) and UMESKIA SOFTWARES for developing the UmsPay WooCommerce Plugin.
 
