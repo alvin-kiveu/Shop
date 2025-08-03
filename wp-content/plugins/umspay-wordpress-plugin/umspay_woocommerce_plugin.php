@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       Ums Pay for WooCommerce
  * Plugin URI:        https://umspay.co.ke/
- * Description:       🚀 Ums Pay for WooCommerce enables fast and secure payment collection via M-Pesa STK Push directly to your M-Pesa Till, Paybill, or Bank Account. Ideal for Kenyan merchants using WooCommerce.
+ * Description:       Ums Pay for WooCommerce enables fast and secure payment collection via M-Pesa STK Push directly to your M-Pesa Till, Paybill, or Bank Account. Ideal for Kenyan merchants using WooCommerce.
  * Version:           2.2.0
  * Requires at least: 5.0
  * Tested up to:      6.4
@@ -77,57 +77,77 @@ function umspayplugin_init()
       add_action('woocommerce_api_wc_umspay_gateway', array($this, 'webhook'));
     }
 
+    /**
+     * Initialize Gateway Settings Form Fields
+     */
     public function init_form_fields()
     {
       $this->form_fields = array(
+
+        // Enable/Disable the gateway
         'enabled' => array(
-          'title' => __('Enable/Disable', 'umspay-woocommerce'),
-          'type' => 'checkbox',
-          'label' => __('Enable Umspay Payments', 'umspay-woocommerce'),
+          'title'   => __('Enable/Disable', 'umspay-woocommerce'),
+          'type'    => 'checkbox',
+          'label'   => __('Enable UmsPay Payments', 'umspay-woocommerce'),
           'default' => 'no',
         ),
+
+        // Title shown at checkout
         'title' => array(
-          'title' => __('Title', 'umspay-woocommerce'),
-          'type' => 'text',
-          'default' => __('Umspay', 'umspay-woocommerce'),
+          'title'    => __('Title', 'umspay-woocommerce'),
+          'type'     => 'text',
+          'default'  => __('UmsPay', 'umspay-woocommerce'),
           'desc_tip' => true,
         ),
+
+        // Description shown at checkout
         'description' => array(
-          'title' => __('Description', 'umspay-woocommerce'),
-          'type' => 'textarea',
-          'default' => __('Pay via Umspay; payment is processed securely.', 'umspay-woocommerce'),
+          'title'    => __('Description', 'umspay-woocommerce'),
+          'type'     => 'textarea',
+          'default'  => __('Pay via UmsPay; your payment will be processed securely via M-Pesa STK Push.', 'umspay-woocommerce'),
           'desc_tip' => true,
         ),
+
+        // UmsPay account email
         'owneremail' => array(
-          'title' => __('Owner Email', 'umspay-woocommerce'),
-          'type' => 'email',
-          'desc_tip' => true,
-          'description' => __('Enter your Umspay account email.', 'umspay-woocommerce'),
+          'title'       => __('Owner Email', 'umspay-woocommerce'),
+          'type'        => 'email',
+          'desc_tip'    => true,
+          'description' => __('Enter your UmsPay account email used for merchant verification.', 'umspay-woocommerce'),
         ),
+
+        // UmsPay API Key
         'api_key' => array(
-          'title' => __('API Key', 'umspay-woocommerce'),
-          'type' => 'text',
-          'desc_tip' => true,
-          'description' => __('Get your API Key from your Umspay Account.', 'umspay-woocommerce'),
+          'title'       => __('API Key', 'umspay-woocommerce'),
+          'type'        => 'text',
+          'desc_tip'    => true,
+          'description' => __('Get your API Key from your UmsPay merchant dashboard.', 'umspay-woocommerce'),
         ),
+
+        // UmsPay Account ID
         'account_id' => array(
-          'title' => __('Account ID', 'umspay-woocommerce'),
-          'type' => 'text',
-          'desc_tip' => true,
-          'description' => __('Get your Account ID from your Umspay Account.', 'umspay-woocommerce'),
+          'title'       => __('Account ID', 'umspay-woocommerce'),
+          'type'        => 'text',
+          'desc_tip'    => true,
+          'description' => __('Get your Account ID from your UmsPay merchant dashboard.', 'umspay-woocommerce'),
         ),
+
+        // Readonly Webhook URL
         'webhook' => array(
-          'title' => __('Webhook', 'umspay-woocommerce'),
-          'type' => 'text',
-          'default' => esc_url(get_site_url() . '/wc-api/wc_umspay_gateway/'),
-          'desc_tip' => true,
+          'title'       => __('Webhook URL', 'umspay-woocommerce'),
+          'type'        => 'text',
+          'default'     => esc_url(get_site_url() . '/wc-api/wc_umspay_gateway/'),
+          'desc_tip'    => true,
+          'description' => __('This is the URL that UmsPay will send payment notifications to.', 'umspay-woocommerce'),
           'custom_attributes' => array(
             'readonly' => 'readonly',
-            'onfocus' => 'this.select()',
+            'onfocus'  => 'this.select()',
           ),
         ),
+
       );
     }
+
 
     public function receipt_page($order_id)
     {
