@@ -34,10 +34,26 @@ defined('ABSPATH') or die('You cannot access this file directly.');
 add_action('before_woocommerce_init', function () {
   if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
     \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+    \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
   }
 });
 
 add_action('plugins_loaded', 'umspayplugin_init');
+
+// Register block support for WooCommerce Blocks
+add_action('woocommerce_blocks_loaded', 'umspay_woocommerce_block_support');
+
+function umspay_woocommerce_block_support() {
+  if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+    require_once plugin_dir_path(__FILE__) . 'includes/class-umspay-blocks-support.php';
+    add_action(
+      'woocommerce_blocks_payment_method_type_registration',
+      function(Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry) {
+        $payment_method_registry->register(new WC_UmsPay_Blocks_Support);
+      }
+    );
+  }
+}
 
 function umspayplugin_init()
 {
@@ -59,6 +75,12 @@ function umspayplugin_init()
       $this->has_fields = true;
       $this->method_title = __('Umspay Gateway', 'umspay-woocommerce');
       $this->method_description = __('Umspay Receive payment Using Buy goods and Paybill Number.', 'umspay-woocommerce');
+      
+      // Define supported features for WooCommerce Blocks
+      $this->supports = array(
+        'products',
+        'refunds'
+      );
 
       // Initialize settings
       $this->init_form_fields();
@@ -181,7 +203,7 @@ function umspayplugin_init()
         }
 
         // Make API request
-        $response = wp_remote_post('https://api.umspay.co.ke/api/v1/intiatestk', [
+        $response = wp_remote_post('https://api.umspay.co.ke/api/v1/initiatestkpush', [
           'body'    => wp_json_encode([
             'api_key'   => sanitize_text_field($_POST['apikey']),
             'email'     => sanitize_email($_POST['owneremail']),
@@ -234,14 +256,201 @@ function umspayplugin_init()
     }
 
 
+    /**
+     * Output for the order received page.
+     */
+    public function payment_fields() {
+      if ($this->description) {
+        echo wpautop(wptexturize($this->description));
+      }
+      
+      // Add phone number field for classic checkout
+      echo '<div class="umspay-phone-field-wrapper">';
+      echo '<p class="form-row form-row-wide">';
+      echo '<label for="umspay_phone">' . __('M-Pesa Phone Number', 'umspay-woocommerce') . ' <span class="required">*</span></label>';
+      echo '<input type="tel" class="input-text" id="umspay_phone" name="umspay_phone" placeholder="254XXXXXXXXX" pattern="254[0-9]{9}" required />';
+      echo '<small>' . __('Format: 254XXXXXXXXX', 'umspay-woocommerce') . '</small>';
+      echo '</p>';
+      echo '</div>';
+      
+      // Add instructions
+      echo '<div class="umspay-instructions">';
+      echo '<h4>' . __('Payment Instructions:', 'umspay-woocommerce') . '</h4>';
+      echo '<ol>';
+      echo '<li>' . __('Enter your M-Pesa phone number above', 'umspay-woocommerce') . '</li>';
+      echo '<li>' . __('Click "Place Order" to proceed', 'umspay-woocommerce') . '</li>';
+      echo '<li>' . __('You will receive an STK Push on your phone', 'umspay-woocommerce') . '</li>';
+      echo '<li>' . __('Enter your M-Pesa PIN to complete payment', 'umspay-woocommerce') . '</li>';
+      echo '</ol>';
+      echo '</div>';
+      
+      // Add CSS for styling
+      echo '<style>
+        .umspay-phone-field-wrapper .form-row {
+          margin-bottom: 16px;
+        }
+        .umspay-phone-field-wrapper input[type="tel"] {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+        .umspay-phone-field-wrapper small {
+          color: #666;
+          font-size: 12px;
+        }
+        .umspay-instructions {
+          background: #f8f9fa;
+          padding: 16px;
+          border-radius: 4px;
+          border-left: 4px solid #007cba;
+          margin-top: 16px;
+        }
+        .umspay-instructions h4 {
+          margin: 0 0 12px 0;
+          color: #007cba;
+          font-size: 14px;
+        }
+        .umspay-instructions ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .umspay-instructions li {
+          margin-bottom: 4px;
+          font-size: 13px;
+          color: #555;
+        }
+      </style>';
+    }
+
     public function process_payment($order_id)
     {
-      global $woocommerce;
-      $order = new WC_Order($order_id);
-      return array(
-        'result' => 'success',
-        'redirect' => $order->get_checkout_payment_url(true, true)
+      $order = wc_get_order($order_id);
+      
+      if (!$order) {
+        wc_add_notice(__('Order not found.', 'umspay-woocommerce'), 'error');
+        return array('result' => 'fail');
+      }
+
+      // Get phone number from form or order
+      $phone = '';
+      if (isset($_POST['umspay_phone']) && !empty($_POST['umspay_phone'])) {
+        $phone = sanitize_text_field($_POST['umspay_phone']);
+      } elseif (isset($_POST['payment_data']['umspay_phone']) && !empty($_POST['payment_data']['umspay_phone'])) {
+        // For block checkout
+        $phone = sanitize_text_field($_POST['payment_data']['umspay_phone']);
+      } else {
+        $phone = $order->get_billing_phone();
+      }
+
+      // Format phone number
+      $phone = $this->format_phone_number($phone);
+      
+      if (!$this->validate_phone_number($phone)) {
+        wc_add_notice(__('Please provide a valid M-Pesa phone number (254XXXXXXXXX).', 'umspay-woocommerce'), 'error');
+        return array('result' => 'fail');
+      }
+
+      // Initiate STK Push
+      $payment_result = $this->initiate_stk_push($order, $phone);
+      
+      if ($payment_result['success']) {
+        // Mark as pending payment (waiting for STK Push)
+        $order->update_status('pending', __('Awaiting M-Pesa STK Push completion.', 'umspay-woocommerce'));
+        
+        // Reduce stock levels
+        wc_reduce_stock_levels($order_id);
+        
+        // Remove cart
+        WC()->cart->empty_cart();
+        
+        return array(
+          'result' => 'success',
+          'redirect' => $this->get_return_url($order)
+        );
+      } else {
+        wc_add_notice($payment_result['message'], 'error');
+        return array('result' => 'fail');
+      }
+    }
+
+    /**
+     * Initiate STK Push payment
+     */
+    private function initiate_stk_push($order, $phone) {
+      $order_id = $order->get_id();
+      $amount = intval($order->get_total());
+
+      $payload = array(
+        'api_key'   => $this->api_key,
+        'email'     => $this->owner_email,
+        'account_id' => $this->account_id,
+        'amount'    => $amount,
+        'msisdn'    => $phone,
+        'reference' => (string) $order_id
       );
+
+      $response = wp_remote_post('https://api.umspay.co.ke/api/v1/initiatestkpush', array(
+        'body'    => wp_json_encode($payload),
+        'headers' => array(
+          'Content-Type' => 'application/json',
+          'User-Agent'   => 'UmsPay-WooCommerce/2.2.0'
+        ),
+        'timeout' => 30,
+      ));
+
+      if (is_wp_error($response)) {
+        return array(
+          'success' => false,
+          'message' => __('Payment initiation failed. Please try again.', 'umspay-woocommerce')
+        );
+      }
+
+      $data = json_decode(wp_remote_retrieve_body($response), true);
+
+      if (isset($data['success']) && $data['success'] == '200') {
+        $order->add_order_note(__('STK Push initiated successfully.', 'umspay-woocommerce'));
+        return array(
+          'success' => true,
+          'message' => __('STK Push sent successfully.', 'umspay-woocommerce')
+        );
+      } else {
+        $error_message = isset($data['errorMessage']) ? $data['errorMessage'] : __('Unknown error occurred', 'umspay-woocommerce');
+        return array(
+          'success' => false,
+          'message' => __('Payment failed: ', 'umspay-woocommerce') . esc_html($error_message)
+        );
+      }
+    }
+
+    /**
+     * Format phone number to 254XXXXXXXXX format
+     */
+    private function format_phone_number($phone) {
+      // Remove all non-numeric characters
+      $phone = preg_replace('/[^0-9]/', '', $phone);
+      
+      // Handle different formats
+      if (strlen($phone) === 9) {
+        // 7XXXXXXXX -> 254XXXXXXX
+        return '254' . $phone;
+      } elseif (strlen($phone) === 10 && substr($phone, 0, 1) === '0') {
+        // 07XXXXXXXX -> 254XXXXXXX
+        return '254' . substr($phone, 1);
+      } elseif (strlen($phone) === 12 && substr($phone, 0, 3) === '254') {
+        // Already in correct format
+        return $phone;
+      }
+      
+      return $phone;
+    }
+
+    /**
+     * Validate phone number format
+     */
+    private function validate_phone_number($phone) {
+      return preg_match('/^254[0-9]{9}$/', $phone);
     }
 
     public function check_payment_status($order_id)
