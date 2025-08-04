@@ -58,13 +58,53 @@ Content-Type: application/json
 ```
 
 ### Webhook Response
-The plugin handles webhook responses with the following fields:
+The plugin handles webhook responses with the following structure:
+
+**Successful Payment:**
+```json
+{
+    "Body": {
+        "stkCallback": {
+            "ResultCode": 0,
+            "ResultDesc": "The service request is processed successfully.",
+            "CallbackMetadata": {
+                "Item": [
+                    {"Name": "Amount", "Value": 100},
+                    {"Name": "MpesaReceiptNumber", "Value": "PDL72WRAVZ"},
+                    {"Name": "TransactionDate", "Value": 20210421114425},
+                    {"Name": "PhoneNumber", "Value": 254718942539}
+                ]
+            },
+            "TinyPesaID": "request_id",
+            "ExternalReference": "ORDER-123",
+            "Amount": 100,
+            "Msisdn": "254718942539"
+        }
+    }
+}
+```
+
+**Failed/Cancelled Payment:**
+```json
+{
+    "Body": {
+        "stkCallback": {
+            "ResultCode": 1031,
+            "ResultDesc": "Request cancelled by user",
+            "TinyPesaID": "request_id",
+            "ExternalReference": "ORDER-123",
+            "Amount": 100,
+            "Msisdn": "254718942539"
+        }
+    }
+}
+```
+
+**Key Fields:**
+- `ResultCode`: 0 = Success, other codes = failure
+- `MpesaReceiptNumber`: M-Pesa transaction code (success only)
 - `TinyPesaID`: Request ID for reference
 - `ExternalReference`: Order reference (ORDER-{order_id})
-- `Amount`: Transaction amount
-- `Msisdn`: Customer phone number
-- `TransactionCode`: M-Pesa transaction code
-- `Status`: Payment status (Success/Failed)
 
 ## Usage
 

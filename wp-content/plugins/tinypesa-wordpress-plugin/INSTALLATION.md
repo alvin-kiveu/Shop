@@ -60,17 +60,66 @@ Body:
 ```
 
 ### Webhook Payload
-Your webhook will receive:
+Your webhook will receive successful payments in this format:
 ```json
 {
-    "TinyPesaID": "request_id",
-    "ExternalReference": "ORDER-123",
-    "Amount": "100",
-    "Msisdn": "254712345678",
-    "TransactionCode": "QAB2C3D4E5",
-    "Status": "Success"
+    "Body": {
+        "stkCallback": {
+            "MerchantRequestID": "26773-830618-1",
+            "CheckoutRequestID": "ws_CO_21042021114416028704",
+            "ResultCode": 0,
+            "ResultDesc": "The service request is processed successfully.",
+            "CallbackMetadata": {
+                "Item": [
+                    {
+                        "Name": "Amount",
+                        "Value": 1
+                    },
+                    {
+                        "Name": "MpesaReceiptNumber",
+                        "Value": "PDL72WRAVZ"
+                    },
+                    {
+                        "Name": "TransactionDate",
+                        "Value": 20210421114425
+                    },
+                    {
+                        "Name": "PhoneNumber",
+                        "Value": 254718942539
+                    }
+                ]
+            },
+            "TinyPesaID": "c002f860-a27d-11eb-a7f4-c141263d7c15",
+            "ExternalReference": "ORDER-123",
+            "Amount": 1,
+            "Msisdn": "254718942539"
+        }
+    }
 }
 ```
+
+Failed/cancelled payments:
+```json
+{
+    "Body": {
+        "stkCallback": {
+            "MerchantRequestID": "25395-1644131-1",
+            "CheckoutRequestID": "ws_CO_26022021085632641774",
+            "ResultCode": 1031,
+            "ResultDesc": "Request cancelled by user",
+            "TinyPesaID": "f8ac0d60-7a14-11eb-ba1d-e3a49273aa65",
+            "ExternalReference": "ORDER-123",
+            "Amount": 1,
+            "Msisdn": "254718942539"
+        }
+    }
+}
+```
+
+**Result Codes:**
+- `0` = Success
+- `1031` = Request cancelled by user
+- Other codes = Various failure reasons
 
 ## Troubleshooting
 

@@ -263,52 +263,144 @@ function tinypesa_plugin_init()
          */
         public function handle_webhook()
         {
+            // Verify request method
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                exit('Method Not Allowed');
+            }
+
             $json = file_get_contents('php://input');
             $data = json_decode($json, true);
 
             error_log('TinyPesa Webhook Data: ' . $json);
 
-            if (!$data) {
+            if (!$data || !isset($data['Body']['stkCallback'])) {
+                error_log('TinyPesa Webhook: Invalid JSON or missing stkCallback structure');
                 http_response_code(400);
-                exit('Invalid JSON');
+                exit('Invalid JSON or missing stkCallback');
+            }
+
+            $callback = $data['Body']['stkCallback'];
+
+            // Validate required fields
+            if (!isset($callback['TinyPesaID']) || !isset($callback['ExternalReference']) || !isset($callback['ResultCode'])) {
+                error_log('TinyPesa Webhook: Missing required fields');
+                http_response_code(400);
+                exit('Missing required fields');
             }
 
             // Extract required fields
-            $request_id = isset($data['TinyPesaID']) ? $data['TinyPesaID'] : '';
-            $external_reference = isset($data['ExternalReference']) ? $data['ExternalReference'] : '';
-            $amount = isset($data['Amount']) ? $data['Amount'] : '';
-            $phone = isset($data['Msisdn']) ? $data['Msisdn'] : '';
-            $transaction_code = isset($data['TransactionCode']) ? $data['TransactionCode'] : '';
-            $status = isset($data['Status']) ? $data['Status'] : '';
+            $request_id = sanitize_text_field($callback['TinyPesaID']);
+            $external_reference = sanitize_text_field($callback['ExternalReference']);
+            $amount = isset($callback['Amount']) ? floatval($callback['Amount']) : 0;
+            $phone = isset($callback['Msisdn']) ? sanitize_text_field($callback['Msisdn']) : '';
+            $result_code = intval($callback['ResultCode']);
+            $result_desc = isset($callback['ResultDesc']) ? sanitize_text_field($callback['ResultDesc']) : '';
+            $merchant_request_id = isset($callback['MerchantRequestID']) ? sanitize_text_field($callback['MerchantRequestID']) : '';
+            $checkout_request_id = isset($callback['CheckoutRequestID']) ? sanitize_text_field($callback['CheckoutRequestID']) : '';
+
+            // Initialize transaction variables
+            $transaction_code = '';
+            $transaction_date = '';
+
+            // Extract transaction details from CallbackMetadata (for successful payments)
+            if ($result_code == 0 && isset($callback['CallbackMetadata']['Item'])) {
+                foreach ($callback['CallbackMetadata']['Item'] as $item) {
+                    if (isset($item['Name']) && isset($item['Value'])) {
+                        if ($item['Name'] == 'MpesaReceiptNumber') {
+                            $transaction_code = sanitize_text_field($item['Value']);
+                        } elseif ($item['Name'] == 'TransactionDate') {
+                            $transaction_date = sanitize_text_field($item['Value']);
+                        }
+                    }
+                }
+            }
 
             // Extract order ID from external reference
             if (strpos($external_reference, 'ORDER-') === 0) {
                 $order_id = (int)str_replace('ORDER-', '', $external_reference);
                 $order = wc_get_order($order_id);
 
-                if ($order) {
-                    if ($status === 'Success' || $status === 'success') {
-                        // Payment successful
-                        $order->payment_complete($transaction_code);
-                        $order->add_order_note(sprintf(
-                            __('M-Pesa payment completed. Transaction Code: %s, Phone: %s', 'tinypesa-woocommerce'),
-                            $transaction_code,
-                            $phone
-                        ));
-                    } else {
-                        // Payment failed
-                        $order->update_status('failed', sprintf(
-                            __('M-Pesa payment failed. Status: %s', 'tinypesa-woocommerce'),
-                            $status
-                        ));
+                if ($order && $order->get_payment_method() === 'tinypesa') {
+                    // Prevent duplicate processing
+                    $existing_result_code = $order->get_meta('_tinypesa_result_code');
+                    if ($existing_result_code !== '' && $existing_result_code == $result_code) {
+                        error_log('TinyPesa Webhook: Duplicate webhook for Order #' . $order_id);
+                        http_response_code(200);
+                        exit('Duplicate webhook - already processed');
                     }
 
-                    // Store webhook data
-                    $order->add_meta_data('_tinypesa_transaction_code', $transaction_code);
+                    if ($result_code == 0) {
+                        // Payment successful
+                        if ($transaction_code) {
+                            $order->payment_complete($transaction_code);
+                        } else {
+                            $order->payment_complete();
+                        }
+                        
+                        $order->add_order_note(sprintf(
+                            __('M-Pesa payment completed successfully. Transaction Code: %s, Phone: %s, Date: %s', 'tinypesa-woocommerce'),
+                            $transaction_code ?: 'N/A',
+                            $phone,
+                            $transaction_date ?: 'N/A'
+                        ));
+                        
+                        // Update order status to processing
+                        $order->update_status('processing', 'Payment completed via TinyPesa webhook.');
+                    } else {
+                        // Payment failed or cancelled
+                        $order->update_status('failed', sprintf(
+                            __('M-Pesa payment failed. Result Code: %s, Description: %s', 'tinypesa-woocommerce'),
+                            $result_code,
+                            $result_desc
+                        ));
+                        
+                        // Add detailed failure note
+                        $order->add_order_note(sprintf(
+                            __('Payment failed - Code: %s, Description: %s, Phone: %s', 'tinypesa-woocommerce'),
+                            $result_code,
+                            $result_desc,
+                            $phone
+                        ));
+
+                        // Restore stock if payment failed
+                        wc_increase_stock_levels($order_id);
+                    }
+
+                    // Store all webhook data as order meta
+                    $order->add_meta_data('_tinypesa_request_id', $request_id);
+                    $order->add_meta_data('_tinypesa_merchant_request_id', $merchant_request_id);
+                    $order->add_meta_data('_tinypesa_checkout_request_id', $checkout_request_id);
+                    $order->add_meta_data('_tinypesa_result_code', $result_code);
+                    $order->add_meta_data('_tinypesa_result_desc', $result_desc);
                     $order->add_meta_data('_tinypesa_phone', $phone);
-                    $order->add_meta_data('_tinypesa_status', $status);
+                    $order->add_meta_data('_tinypesa_amount', $amount);
+                    $order->add_meta_data('_tinypesa_webhook_processed', current_time('mysql'));
+                    
+                    if ($transaction_code) {
+                        $order->add_meta_data('_tinypesa_transaction_code', $transaction_code);
+                    }
+                    if ($transaction_date) {
+                        $order->add_meta_data('_tinypesa_transaction_date', $transaction_date);
+                    }
+                    
                     $order->save();
+                    
+                    error_log(sprintf(
+                        'TinyPesa webhook processed successfully for Order #%d - Result Code: %s, Transaction: %s',
+                        $order_id,
+                        $result_code,
+                        $transaction_code ?: 'N/A'
+                    ));
+                } else {
+                    if (!$order) {
+                        error_log('TinyPesa webhook: Order not found for ID ' . $order_id);
+                    } else {
+                        error_log('TinyPesa webhook: Order #' . $order_id . ' payment method mismatch');
+                    }
                 }
+            } else {
+                error_log('TinyPesa webhook: Invalid external reference format - ' . $external_reference);
             }
 
             http_response_code(200);
