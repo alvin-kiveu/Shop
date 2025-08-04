@@ -1,0 +1,7 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="40" rx="8" fill="#00A86B"/>
+  <text x="60" y="16" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="white">TinyPesa</text>
+  <text x="60" y="28" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="white">M-Pesa Gateway</text>
+  <circle cx="15" cy="20" r="3" fill="white"/>
+  <circle cx="105" cy="20" r="3" fill="white"/>
+</svg>
