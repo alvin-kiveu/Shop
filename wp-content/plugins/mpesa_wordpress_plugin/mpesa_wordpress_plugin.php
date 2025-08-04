@@ -3,7 +3,7 @@
  * Plugin Name:       M-Pesa for WooCommerce
  * Plugin URI:        https://yourwebsite.com/mpesa-woocommerce/
  * Description:       Accept M-Pesa payments directly in your WooCommerce store. Supports STK Push for seamless mobile payments.
- * Version:           2.1.0
+ * Version:           2.0.0
  * Requires at least: 5.0
  * Tested up to:      6.4
  * Requires PHP:      7.4
@@ -60,7 +60,6 @@ function mpesa_wordpress_plugin_init() {
         public $passkey;
         public $environment;
         public $transaction_type;
-        public $instructions;
 
         public function __construct() {
             $this->id = 'mpesa';
@@ -211,7 +210,7 @@ function mpesa_wordpress_plugin_init() {
             echo '</ol>';
             echo '</div>';
             
-            // Add some CSS and JavaScript
+            // Add some CSS
             echo '<style>
                 .mpesa-instructions {
                     background: #f8f9fa;
@@ -227,32 +226,7 @@ function mpesa_wordpress_plugin_init() {
                 .mpesa-instructions ol {
                     margin-bottom: 0;
                 }
-                .form-row input[type="tel"] {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                }
             </style>';
-            
-            echo '<script>
-                jQuery(document).ready(function($) {
-                    $("#mpesa_phone").on("input", function() {
-                        let value = this.value.replace(/\D/g, "");
-                        if (value.length > 0 && !value.startsWith("254")) {
-                            if (value.startsWith("0")) {
-                                value = "254" + value.substring(1);
-                            } else if (value.startsWith("7") || value.startsWith("1")) {
-                                value = "254" + value;
-                            }
-                        }
-                        if (value.length > 12) {
-                            value = value.substring(0, 12);
-                        }
-                        this.value = value;
-                    });
-                });
-            </script>';
         }
 
         public function validate_fields() {
@@ -298,19 +272,8 @@ function mpesa_wordpress_plugin_init() {
                 return false;
             }
             
-            // Get phone number from POST data (supports both classic and block checkout)
-            $phone = '';
-            if (isset($_POST['mpesa_phone'])) {
-                $phone = sanitize_text_field($_POST['mpesa_phone']);
-            } elseif (isset($_POST['payment_data']['mpesa_phone'])) {
-                $phone = sanitize_text_field($_POST['payment_data']['mpesa_phone']);
-            }
-            
-            if (empty($phone)) {
-                wc_add_notice(__('Please enter your M-Pesa phone number', 'mpesa-woocommerce'), 'error');
-                return false;
-            }
-            
+            // Get and validate phone number
+            $phone = sanitize_text_field($_POST['mpesa_phone']);
             $formatted_phone = $this->format_phone_number($phone);
             
             if (!$this->validate_phone_number($formatted_phone)) {
