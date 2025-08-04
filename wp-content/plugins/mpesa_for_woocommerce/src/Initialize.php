@@ -93,7 +93,8 @@ class Initialize
 
     public function osen_wc_scripts()
     {
-        if (\is_checkout()) {
+        // Check if WooCommerce is active and function exists
+        if (\function_exists('is_checkout') && \is_checkout()) {
             \wp_enqueue_style("wc-mpesa-3-0", \plugins_url("osen-wc-mpesa/assets/styles.css"));
             
             \wp_enqueue_script('jquery');
